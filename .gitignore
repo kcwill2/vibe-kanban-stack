@@ -86,3 +86,8 @@ vibe-kanban-cloud/
 
 .jj
 .sisyphus/
+
+# CCR stack - config has API keys; logs are ephemeral
+ccr-data/logs/
+ccr-data/config.json
+ccr-data/*.backup*.json

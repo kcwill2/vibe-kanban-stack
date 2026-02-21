@@ -1,0 +1,1 @@
+docker exec -it remote-claude-code-router-1 cat /root/.claude-code-router/config.json
