@@ -20,6 +20,7 @@
 ### CCR Config Fixes
 - **ccr-data/config.json:** Gemini `api_base_url` changed from `.../v1beta/models/` to `.../v1beta/`
 - **ccr-data/config.json:** Added `gemini-2.5-flash`, `gemini-2.5-pro` to Gemini models
+- **ccr-data/config.example.json:** Added `claude-sonnet-4-6`, `gemini-3-pro-preview`, `gemini-3-flash-preview`; set `LOG_LEVEL: trace`; default model `anthropic,claude-sonnet-4-6`
 
 ### Logging and Docs
 - **REMOTE_BACKEND_FIX.md:** CCR logging section (log location, tail command, what to look for)

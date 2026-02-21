@@ -1,6 +1,6 @@
 {
   "LOG": true,
-  "LOG_LEVEL": "debug",
+  "LOG_LEVEL": "trace",
   "HOST": "0.0.0.0",
   "PORT": 3456,
   "APIKEY": "ccr-local-dev-key",
@@ -9,21 +9,21 @@
       "name": "anthropic",
       "api_base_url": "https://api.anthropic.com/v1",
       "api_key": "$ANTHROPIC_API_KEY",
-      "models": ["claude-3-5-sonnet-20241022", "claude-3-7-sonnet-20250219", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
+      "models": ["claude-sonnet-4-6", "claude-3-5-sonnet-20241022", "claude-3-7-sonnet-20250219", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
       "headers": { "anthropic-version": "2023-06-01" }
     },
     {
       "name": "openrouter",
       "api_base_url": "https://openrouter.ai/api/v1/chat/completions",
       "api_key": "$OPENROUTER_API_KEY",
-      "models": ["google/gemini-2.5-pro-preview", "anthropic/claude-3.5-sonnet", "openai/gpt-4o"],
+      "models": ["google/gemini-2.5-pro-preview", "google/gemini-3-pro-preview", "google/gemini-3-flash-preview", "anthropic/claude-3.5-sonnet", "openai/gpt-4o"],
       "transformer": { "use": ["openrouter"] }
     },
     {
       "name": "gemini",
       "api_base_url": "https://generativelanguage.googleapis.com/v1beta/",
       "api_key": "$GEMINI_API_KEY",
-      "models": ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-pro"],
+      "models": ["gemini-3-pro-preview", "gemini-3-flash-preview", "gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-pro"],
       "transformer": { "use": ["gemini"] }
     },
     {
@@ -35,7 +35,7 @@
     }
   ],
   "Router": {
-    "default": "anthropic,claude-3-7-sonnet-20250219",
+    "default": "anthropic,claude-sonnet-4-6",
     "background": "lmstudio,local-model",
     "longContext": "openrouter,google/gemini-2.5-pro-preview"
   }

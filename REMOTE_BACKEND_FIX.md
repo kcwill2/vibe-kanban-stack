@@ -84,7 +84,7 @@ The frontend will proxy to vk-remote on 3000, which talks to remote-server on 30
 
 ## CCR Logging (Debugging Model Errors)
 
-CCR logs to `ccr-data/logs/` with filenames like `ccr-YYYYMMDDHHMMSS.log`. With `LOG: true` and `LOG_LEVEL: debug` in `ccr-data/config.json`, logs include:
+CCR logs to `ccr-data/logs/` with filenames like `ccr-YYYYMMDDHHMMSS.log`. With `LOG: true` and `LOG_LEVEL: trace` (or `debug`) in `ccr-data/config.json`, logs include:
 
 - Incoming requests (URL, method)
 - Request bodies (`data.model`, `data.messages`, etc.)
