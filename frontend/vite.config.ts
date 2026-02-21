@@ -79,6 +79,25 @@ export default schemas;
 }
 
 export default defineConfig({
+  server: {
+    host: '127.0.0.1',
+    proxy: {
+      // 1. Versioned API (used by remote frontend / shared API)
+      '/v1': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+      // 2. Main app API and WebSockets — backend (server binary) serves under /api, do NOT rewrite
+      '/api': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+    },
+  },
   customLogger: createFilteredLogger(),
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
@@ -112,23 +131,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       shared: path.resolve(__dirname, '../shared'),
     },
-  },
-  server: {
-    port: parseInt(process.env.FRONTEND_PORT || '3000'),
-    proxy: {
-      '/api': {
-        target: `http://localhost:${process.env.BACKEND_PORT || '3001'}`,
-        changeOrigin: true,
-        ws: true,
-      },
-    },
-    fs: {
-      allow: [path.resolve(__dirname, '.'), path.resolve(__dirname, '..')],
-    },
-    open: process.env.VITE_OPEN === 'true',
-    allowedHosts: [
-      '.trycloudflare.com', // allow all cloudflared tunnels
-    ],
   },
   optimizeDeps: {
     exclude: ['wa-sqlite'],

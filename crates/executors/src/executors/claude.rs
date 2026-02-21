@@ -1,5 +1,6 @@
 // SDK submodules
 pub mod client;
+pub mod model_discovery;
 pub mod protocol;
 pub mod slash_commands;
 pub mod types;
@@ -238,14 +239,20 @@ fn default_discovered_options() -> crate::executor_discovery::ExecutorDiscovered
         model_selector::{ModelInfo, ModelSelectorConfig},
     };
 
+    // Flat list with CCR-style ids (provider,model) - no provider accordion
     ExecutorDiscoveredOptions {
         model_selector: ModelSelectorConfig {
             providers: vec![],
             models: [
-                ("claude-opus-4-6", "Opus"),
-                ("claude-opus-4-6[1m]", "Opus (1M context)"),
-                ("claude-haiku-4-5-20251001", "Haiku"),
-                ("claude-sonnet-4-5-20250929", "Sonnet"),
+                ("anthropic,claude-3-5-sonnet-20241022", "Claude 3.5 Sonnet"),
+                ("anthropic,claude-3-7-sonnet-20250219", "Claude 3.7 Sonnet"),
+                ("anthropic,claude-sonnet-4-5-20250929", "Claude Sonnet 4.5"),
+                ("anthropic,claude-haiku-4-5-20251001", "Claude Haiku 4.5"),
+                ("openrouter,google/gemini-2.5-pro-preview", "Gemini 2.5 Pro"),
+                ("openrouter,anthropic/claude-3.5-sonnet", "Claude 3.5 Sonnet"),
+                ("openrouter,openai/gpt-4o", "GPT-4o"),
+                ("gemini,gemini-2.0-flash", "Gemini 2.0 Flash"),
+                ("gemini,gemini-1.5-pro", "Gemini 1.5 Pro"),
             ]
             .into_iter()
             .map(|(id, name)| ModelInfo {
@@ -255,7 +262,7 @@ fn default_discovered_options() -> crate::executor_discovery::ExecutorDiscovered
                 reasoning_options: vec![],
             })
             .collect(),
-            default_model: Some("claude-opus-4-6".to_string()),
+            default_model: Some("anthropic,claude-3-7-sonnet-20250219".to_string()),
             agents: vec![],
             permissions: vec![
                 PermissionPolicy::Auto,
@@ -456,6 +463,30 @@ impl StandardCodingAgentExecutor for ClaudeCode {
             let discovery_path = target_path.as_deref().unwrap_or(Path::new(".")).to_path_buf();
             let mut final_options = default_discovered_options();
 
+            // Fetch models from APIs (Anthropic, Gemini) and merge with defaults.
+            // Use DISCOVERY_* vars if set (for when ANTHROPIC_API_KEY is overridden for CCR).
+            let fallback = final_options.model_selector.models.clone();
+            let anthropic_key = std::env::var("DISCOVERY_ANTHROPIC_API_KEY")
+                .ok()
+                .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
+                .filter(|k| !k.is_empty() && k != "ccr-local-dev-key");
+            let gemini_key = std::env::var("DISCOVERY_GEMINI_API_KEY")
+                .ok()
+                .or_else(|| std::env::var("GEMINI_API_KEY").ok())
+                .filter(|k| !k.is_empty());
+            let models =
+                crate::executors::claude::model_discovery::fetch_models_from_apis(
+                    anthropic_key.as_deref(),
+                    gemini_key.as_deref(),
+                    fallback,
+                )
+                .await;
+            if !models.is_empty() {
+                final_options.model_selector.models = models.clone();
+                yield patch::update_models(models);
+            }
+            yield patch::models_loaded();
+
             match this.discover_agents_and_slash_commands_initial(&discovery_path).await {
                 Ok((mut agent_options, slash_commands_initial, plugins)) => {
                     let default_agents = [
@@ -585,6 +616,18 @@ impl ClaudeCode {
         env.clone()
             .with_profile(&self.cmd)
             .apply_to_command(&mut command);
+
+        // Ensure model is in env so the Agent SDK includes it in the request body (fixes CCR "Missing model in request body")
+        if let Some(ref model) = self.model {
+            let model_for_request = if model.contains(',') {
+                model.clone()
+            } else if model.contains('/') {
+                model.replacen('/', ",", 1)
+            } else {
+                format!("anthropic,{}", model)
+            };
+            command.env("ANTHROPIC_MODEL", model_for_request);
+        }
 
         // Remove ANTHROPIC_API_KEY if disable_api_key is enabled
         if self.disable_api_key.unwrap_or(false) {

@@ -83,7 +83,9 @@ export const useJsonPatchWsStream = <T extends object>(
 
     // Initialize data
     if (!dataRef.current) {
-      dataRef.current = initialData();
+      const initial = initialData();
+      dataRef.current = initial;
+      setData(initial);
 
       // Inject initial entry if provided
       if (injectInitialEntry) {
